@@ -2,41 +2,46 @@ extends CharacterBody2D
 class_name Player
 
 const SPEED = 300.0
-const JUMP_VELOCITY = -400.0
+const JUMP_VELOCITY = -500.0
 
-# Multiplayer sync properties
+# Coyote time (allows jumping shortly after leaving platform)
+const COYOTE_TIME = 0.15
+var coyote_timer = 0.0
+
 @export var player_id: int = 1
 
 func _enter_tree():
-	# Set the multiplayer authority
-	# This ensures only the owning client controls this player
 	set_multiplayer_authority(player_id)
 
-
 func _physics_process(delta):
-	# Only process input if this is OUR player
 	if is_multiplayer_authority():
 		_handle_movement(delta)
 	
-	# Physics runs on all clients for smooth prediction
 	move_and_slide()
 
 func _handle_movement(delta):
-	# Add gravity
+	# Gravity
 	if not is_on_floor():
 		velocity += get_gravity() * delta
+		coyote_timer -= delta
+	else:
+		coyote_timer = COYOTE_TIME
 	
-	# Handle jump
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	# Jump with buffering and coyote time
+	if InputManager.has_buffered_jump() and (is_on_floor() or coyote_timer > 0):
 		velocity.y = JUMP_VELOCITY
+		InputManager.consume_jump_buffer()
+		coyote_timer = 0
 	
-	# Get input direction
-	var direction = Input.get_axis("move_left", "move_right")
+	# Variable jump height (release jump early = smaller jump)
+	if velocity.y < 0 and not InputManager.is_jump_held():
+		velocity.y *= 0.5
+	
+	# Horizontal movement
+	var direction = InputManager.get_horizontal_direction()
 	
 	if direction != 0:
 		velocity.x = direction * SPEED
-		# Flip sprite based on direction
 		$Sprite2D.flip_h = direction < 0
 	else:
-		# Apply friction when not moving
 		velocity.x = move_toward(velocity.x, 0, SPEED * delta * 10)
