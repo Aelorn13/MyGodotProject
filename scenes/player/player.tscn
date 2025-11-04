@@ -3,10 +3,10 @@
 [ext_resource type="Script" uid="uid://thhmthyvk5s8" path="res://scenes/player/player.gd" id="1_8afob"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hbem4"]
-size = Vector2(30, 60)
+size = Vector2(30, 50)
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_8afob"]
-size = Vector2(32, 64)
+size = Vector2(32, 52)
 
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_8afob")
