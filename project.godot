@@ -11,14 +11,13 @@ config_version=5
 [application]
 
 config/name="2d_rpg_platformer"
-run/main_scene="uid://dcm1u4xtwhkc3"
-config/features=PackedStringArray("4.5", "Forward Plus")
+run/main_scene="uid://dd4inkvul2lyt"
+config/features=PackedStringArray("4.5", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
-InputManager="*res://scripts/systems/input_manager.gd"
-NetworkManager="*res://scripts/systems/network_manager.gd"
+NetworkManager="*res://scripts/systems/NetworkManager.cs"
 
 [dotnet]
 
@@ -57,3 +56,8 @@ jump={
 2d_physics/layer_1="Static"
 2d_physics/layer_2="Dynamic"
 2d_physics/layer_3="Danger"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

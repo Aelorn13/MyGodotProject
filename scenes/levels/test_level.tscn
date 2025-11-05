@@ -1,0 +1,57 @@
+[gd_scene load_steps=5 format=4 uid="uid://dcm1u4xtwhkc3"]
+
+[ext_resource type="Script" uid="uid://cov5oyo2ni7u0" path="res://scripts/levels/MultiplayerLevel.cs" id="1_yautc"]
+[ext_resource type="Texture2D" uid="uid://whyqcfjd02nt" path="res://assets/sprites/CaveTiles/cavesofgallet_tiles.png" id="2_fr1um"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_w20ko"]
+texture = ExtResource("2_fr1um")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -0.17985725, 8, 0.17985916, 8, 8, -8, 8)
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+3:2/0 = 0
+0:3/0 = 0
+1:3/0 = 0
+2:3/0 = 0
+3:3/0 = 0
+0:4/0 = 0
+1:4/0 = 0
+2:4/0 = 0
+3:4/0 = 0
+0:5/0 = 0
+1:5/0 = 0
+2:5/0 = 0
+3:5/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_3wv3p"]
+physics_layer_0/collision_layer = 1
+terrain_set_0/mode = 0
+terrain_set_0/terrain_0/name = "Terrain 0"
+terrain_set_0/terrain_0/color = Color(0.5, 0.34375, 0.25, 1)
+sources/0 = SubResource("TileSetAtlasSource_w20ko")
+
+[node name="test_level" type="Node2D"]
+script = ExtResource("1_yautc")
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+position = Vector2(14, -20)
+tile_map_data = PackedByteArray("AAAsABkAAAAAAAAAAAAtABkAAAAAAAAAAAAuABkAAAAAAAAAAAAvABkAAAAAAAAAAAAwABkAAAAAAAAAAAAxABkAAAAAAAAAAAAyABkAAAAAAAAAAAAzABkAAAAAAAAAAAA0ABkAAAAAAAAAAAA1ABkAAAAAAAAAAAA2ABkAAAAAAAAAAAA3ABkAAAAAAAAAAAA4ABkAAAAAAAAAAAA5ABkAAAAAAAAAAAA6ABkAAAAAAAAAAAA7ABkAAAAAAAAAAAA8ABkAAAAAAAAAAAA8ABUAAAAAAAAAAAA9ABUAAAAAAAAAAAA+ABUAAAABAAAAAAA/ABUAAAABAAAAAAA8ABAAAAAAAAAAAAA9ABAAAAAAAAAAAAA+ABAAAAAAAAAAAAA/ABAAAAAAAAAAAABAABAAAAAAAAAAAABBABAAAAAAAAAAAAArABkAAAAAAAAAAAA9ABkAAAAAAAAAAAA9ABgAAAAAAAAAAAA9ABcAAAAAAAAAAAA9ABYAAAAAAAAAAAA8ABYAAAAAAAAAAAA9ABQAAAAAAAAAAAA+ABQAAAAAAAAAAAA/ABQAAAAAAAAAAAA/ABMAAAAAAAAAAAA/ABIAAAAAAAAAAAA/ABEAAAAAAAAAAAA+ABEAAAAAAAAAAAA9ABEAAAAAAAAAAAA8ABEAAAAAAAAAAAAoABIAAAAAAAAAAAAnABIAAAAAAAAAAAAoAA4AAAAAAAAAAAAnAA4AAAAAAAAAAAArABUAAAAAAAAAAAAsABUAAAAAAAAAAAAtABUAAAAAAAAAAAAqABEAAAAAAAAAAAApABAAAAAAAAAAAAArABoAAAAAAAAAAAAqABoAAAAAAAAAAAApABoAAAAAAAAAAAAoABoAAAAAAAAAAAAnABoAAAAAAAAAAAAmABoAAAAAAAAAAAAlABsAAAAAAAAAAAAkABsAAAAAAAAAAAAiABsAAAAAAAAAAAAjABsAAAAAAAAAAAAhABsAAAAAAAAAAAA=")
+tile_set = SubResource("TileSet_3wv3p")
+
+[node name="Players" type="Node2D" parent="."]
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="SpawnPoint1" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(927, 288)
+
+[node name="SpawnPoint2" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(784, 288)

@@ -1,12 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://dtqcnshk1fct6"]
+[gd_scene load_steps=5 format=3 uid="uid://dtqcnshk1fct6"]
 
-[ext_resource type="Script" uid="uid://thhmthyvk5s8" path="res://scenes/player/player.gd" id="1_8afob"]
+[ext_resource type="Script" uid="uid://b4l0xqusgrj5c" path="res://scenes/player/Player.cs" id="1_8afob"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hbem4"]
 size = Vector2(30, 50)
 
 [sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_8afob"]
 size = Vector2(32, 52)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_8afob"]
 
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_8afob")
@@ -21,3 +23,6 @@ position_smoothing_enabled = true
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("PlaceholderTexture2D_8afob")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_8afob")
