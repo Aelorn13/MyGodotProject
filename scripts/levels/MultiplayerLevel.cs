@@ -6,47 +6,62 @@ public partial class MultiplayerLevel : Node2D
 	
 	private Node2D _spawnPoints;
 	private Node2D _playersContainer;
+	private MultiplayerSpawner _multiplayerSpawner;
 
 	public override void _Ready()
 	{
+		// --- 1. GET NODE REFERENCES ---
 		_spawnPoints = GetNode<Node2D>("SpawnPoints");
 		_playersContainer = GetNode<Node2D>("Players");
 		
-		// Connect to network events
+		if (PlayerScene == null)
+		{
+			GD.PrintErr("FATAL: Could not load player scene!");
+			return;
+		}
+		
+		// --- 2. CREATE AND CONFIGURE THE SPAWNER ---
+		_multiplayerSpawner = new MultiplayerSpawner();
+		_multiplayerSpawner.Name = "MultiplayerSpawner";
+		AddChild(_multiplayerSpawner);
+		
+		_multiplayerSpawner.SpawnPath = _playersContainer.GetPath(); 
+		_multiplayerSpawner.AddSpawnableScene(PlayerScene.ResourcePath);
+		_multiplayerSpawner.SpawnFunction = new Callable(this, MethodName.SpawnPlayerFunction);
+		GD.Print("MultiplayerSpawner configured in _Ready.");
+
+		// --- 3. CONNECT SIGNALS ---
 		var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
 		networkManager.PlayerConnected += OnPlayerConnected;
 		networkManager.PlayerDisconnected += OnPlayerDisconnected;
 		
-		// If we're the server, spawn players for existing connections
+		// --- 4. SERVER SPAWNS ITSELF ---
 		if (Multiplayer.IsServer())
 		{
-			// Spawn for host
+			GD.Print("Server is in _Ready. Spawning host (player 1).");
 			SpawnPlayer(Multiplayer.GetUniqueId());
-			
-			// Spawn for already connected peers
-			foreach (int peerId in Multiplayer.GetPeers())
-			{
-				SpawnPlayer(peerId);
-			}
 		}
 	}
 
 	private void OnPlayerConnected(int peerId)
 	{
-		GD.Print($"Player {peerId} connected, spawning player");
+		// The server's own connection signal (ID 1) is ignored because the host is already handled by _Ready().
+		if (peerId == 1)
+		{
+			return;
+		}
 		
-		// Only server spawns players
+		// The server spawns all connecting clients.
 		if (Multiplayer.IsServer())
 		{
+			GD.Print($"Peer {peerId} has connected. Server is now spawning their player.");
 			SpawnPlayer(peerId);
 		}
 	}
 
 	private void OnPlayerDisconnected(int peerId)
 	{
-		GD.Print($"Player {peerId} disconnected, removing player");
-		
-		// Remove player node
+		GD.Print($"Player {peerId} disconnected. Removing player node.");
 		var playerNode = _playersContainer.GetNodeOrNull($"Player_{peerId}");
 		if (playerNode != null)
 		{
@@ -56,40 +71,41 @@ public partial class MultiplayerLevel : Node2D
 
 	private void SpawnPlayer(int peerId)
 	{
-		if (PlayerScene == null)
+		// Safety check remains.
+		if (_playersContainer.GetNodeOrNull($"Player_{peerId}") != null)
 		{
-			GD.PrintErr("PlayerScene not assigned!");
+			GD.PrintErr($"Attempted to spawn Player_{peerId}, but they already exist. Aborting.");
 			return;
 		}
+
+		GD.Print($"Server is issuing spawn command for peer {peerId}.");
+		var spawnData = new Godot.Collections.Array { peerId };
+		_multiplayerSpawner.Spawn(spawnData);
+	}
+
+	private Node SpawnPlayerFunction(Godot.Collections.Array data)
+	{
+		int peerId = data[0].AsInt32();
 		
 		var player = PlayerScene.Instantiate<Player>();
 		player.Name = $"Player_{peerId}";
 		player.PlayerId = peerId;
 		
-		// Get spawn point (cycle through available spawn points)
 		int spawnIndex = (peerId - 1) % _spawnPoints.GetChildCount();
 		var spawnPoint = _spawnPoints.GetChild<Node2D>(spawnIndex);
 		player.GlobalPosition = spawnPoint.GlobalPosition;
 		
-		// Add different colors for different players (optional visual feedback)
 		var sprite = player.GetNode<Sprite2D>("Sprite2D");
 		sprite.Modulate = GetPlayerColor(peerId);
 		
-		_playersContainer.AddChild(player, true); // true = force readable name
+		GD.Print($"Spawn function executed for player {peerId}.");
 		
-		GD.Print($"Spawned player {peerId} at {player.GlobalPosition}");
+		return player;
 	}
 	
 	private Color GetPlayerColor(int peerId)
 	{
-		// Simple color variation based on peer ID
-		Color[] colors = {
-			Colors.White,      // Player 1
-			Colors.LightBlue,  // Player 2
-			Colors.LightGreen, // Player 3
-			Colors.Yellow      // Player 4
-		};
-		
+		Color[] colors = { Colors.White, Colors.LightBlue, Colors.LightGreen, Colors.Yellow };
 		return colors[(peerId - 1) % colors.Length];
 	}
 }

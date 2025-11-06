@@ -3,7 +3,8 @@ using Godot;
 public partial class Player : CharacterBody2D
 {
 	// ===== MULTIPLAYER =====
-	[Export] public int PlayerId { get; set; } = 1;
+	// NO [Export] here - prevents sync issues
+	public int PlayerId { get; set; } = 1;
 	
 	private MultiplayerSynchronizer _synchronizer;
 	
@@ -29,13 +30,29 @@ public partial class Player : CharacterBody2D
 	private Sprite2D _sprite;
 	private float _gravity;
 
+	public override void _EnterTree()
+	{
+		// Set authority FIRST, before anything else
+		SetMultiplayerAuthority(PlayerId);
+		
+		GD.Print($"[{Multiplayer.GetUniqueId()}] Player {Name} EnterTree - PlayerId: {PlayerId}, Setting authority to: {PlayerId}");
+	}
+
 	public override void _Ready()
 	{
 		_sprite = GetNode<Sprite2D>("Sprite2D");
 		_gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
 		
-		SetMultiplayerAuthority(PlayerId);
 		SetupMultiplayerSync();
+		
+		// Enable camera ONLY for our player
+		var camera = GetNodeOrNull<Camera2D>("Camera2D");
+		if (camera != null)
+		{
+			camera.Enabled = IsMultiplayerAuthority();
+		}
+		
+		GD.Print($"[{Multiplayer.GetUniqueId()}] Player {Name} Ready - Authority: {IsMultiplayerAuthority()}, PlayerId: {PlayerId}, Camera: {camera?.Enabled}");
 	}
 	
 	private void SetupMultiplayerSync()
@@ -53,6 +70,7 @@ public partial class Player : CharacterBody2D
 		config.AddProperty(":position");
 		config.AddProperty(":velocity");
 		config.AddProperty("Sprite2D:flip_h");
+		config.AddProperty("Sprite2D:modulate");
 		
 		config.PropertySetSpawn(":position", true);
 		config.PropertySetReplicationMode(":position", SceneReplicationConfig.ReplicationMode.OnChange);
@@ -63,9 +81,10 @@ public partial class Player : CharacterBody2D
 		config.PropertySetSpawn("Sprite2D:flip_h", true);
 		config.PropertySetReplicationMode("Sprite2D:flip_h", SceneReplicationConfig.ReplicationMode.OnChange);
 		
-		_synchronizer.ReplicationConfig = config;
+		config.PropertySetSpawn("Sprite2D:modulate", true); // Tell it to send this value when the node spawns
+		config.PropertySetReplicationMode("Sprite2D:modulate", SceneReplicationConfig.ReplicationMode.OnChange);
 		
-		GD.Print($"Multiplayer sync configured for player {PlayerId}");
+		_synchronizer.ReplicationConfig = config;
 	}
 
 	public override void _PhysicsProcess(double delta)
