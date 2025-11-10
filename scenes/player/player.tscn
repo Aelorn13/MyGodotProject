@@ -1,6 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://dtqcnshk1fct6"]
+[gd_scene load_steps=10 format=3 uid="uid://dtqcnshk1fct6"]
 
 [ext_resource type="Script" uid="uid://b4l0xqusgrj5c" path="res://scenes/player/Player.cs" id="1_8afob"]
+[ext_resource type="Script" uid="uid://ci42n5qaawc7m" path="res://scenes/player/PlayerHealth.cs" id="2_p47bc"]
+[ext_resource type="Script" uid="uid://o0dqmq0ijp0n" path="res://scenes/player/PlayerMovement.cs" id="3_75vfm"]
+[ext_resource type="Script" uid="uid://cd3u7qm30xf02" path="res://scenes/player/PlayerCombat.cs" id="4_0owmy"]
+[ext_resource type="Script" uid="uid://0jaxgokai0mj" path="res://scenes/player/PlayerMultiplayer.cs" id="5_qek5x"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hbem4"]
 size = Vector2(30, 50)
@@ -37,3 +41,15 @@ collision_layer = 2
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
 position = Vector2(30, 0)
 shape = SubResource("RectangleShape2D_8afob")
+
+[node name="PlayerHealth" type="Node" parent="."]
+script = ExtResource("2_p47bc")
+
+[node name="PlayerMovement" type="Node" parent="."]
+script = ExtResource("3_75vfm")
+
+[node name="PlayerCombat" type="Node" parent="."]
+script = ExtResource("4_0owmy")
+
+[node name="PlayerMultiplayer" type="Node" parent="."]
+script = ExtResource("5_qek5x")
