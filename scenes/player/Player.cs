@@ -343,39 +343,40 @@ public partial class Player : CharacterBody2D
 
         foreach (var body in overlappingBodies)
         {
-            // Don't hit ourselves
             if (body == this)
                 continue;
 
-            // Check if it's another player
             if (body is Player otherPlayer)
             {
-                // Deal damage via RPC
-                RpcId(otherPlayer.PlayerId, MethodName.TakeDamage, AttackDamage, PlayerId);
-                GD.Print($"Hit player {otherPlayer.PlayerId}!");
+                // Use string name directly instead of MethodName
+                otherPlayer.RpcId(otherPlayer.PlayerId, "TakeDamage", AttackDamage, PlayerId);
+                GD.Print($"Sent damage RPC to player {otherPlayer.PlayerId}!");
             }
         }
     }
 
-    // RPC to take damage (called on the victim's client)
     [Rpc(
         MultiplayerApi.RpcMode.AnyPeer,
-        CallLocal = false,
+        CallLocal = true,
         TransferMode = MultiplayerPeer.TransferModeEnum.Reliable
     )]
-    private void TakeDamage(int damage, int attackerId)
+    public void TakeDamage(int damage, int attackerId)
     {
-        // Only the victim (authority of this node) processes damage
+        GD.Print(
+            $"TakeDamage RPC received! Damage: {damage}, Attacker: {attackerId}, My ID: {PlayerId}, Authority: {IsMultiplayerAuthority()}"
+        );
+
+        // Only the victim processes damage
         if (!IsMultiplayerAuthority())
+        {
+            GD.Print($"  -> Ignoring, not authority");
             return;
+        }
 
         CurrentHealth -= damage;
 
-        GD.Print(
-            $"Player {PlayerId} took {damage} damage from {attackerId}. Health: {CurrentHealth}/{MaxHealth}"
-        );
+        GD.Print($"  -> Applied! Player {PlayerId} health: {CurrentHealth}/{MaxHealth}");
 
-        // Visual feedback - flash red
         FlashDamage();
     }
 
