@@ -2,10 +2,10 @@ using Godot;
 
 public partial class EnemyCombat : Node
 {
-	private Enemy _enemy;
-	private Area2D _attackArea;
-	private double _attackCooldownTimer = 0.0;
-	private bool _isAttacking = false;
+	protected  Enemy _enemy;
+	protected  Area2D _attackArea;
+	protected  double _attackCooldownTimer = 0.0;
+	protected  bool _isAttacking = false;
 
 	public bool CanAttack => _attackCooldownTimer <= 0 && !_isAttacking;
 
@@ -54,7 +54,7 @@ public partial class EnemyCombat : Node
 		GD.Print($"Enemy {_enemy.EnemyName} attacked!");
 	}
 
-	private void CheckAttackHits()
+	protected  void CheckAttackHits()
 	{
 		if (_attackArea == null)
 			return;

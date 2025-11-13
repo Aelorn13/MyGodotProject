@@ -53,23 +53,43 @@ public partial class Enemy : CharacterBody2D
 			_ai.Initialize(this);
 	}
 
-	public override void _PhysicsProcess(double delta)
+public override void _PhysicsProcess(double delta)
+{
+	// Only server controls enemy AI and physics
+	if (!IsMultiplayerAuthority())
+		return;
+	
+	// Process AI (decides what to do)
+	_ai?.ProcessAI(delta);
+	
+	// Process movement (executes movement)
+	_movement?.ProcessMovement(delta);
+	
+	// Process combat (executes attacks)
+	_combat?.ProcessCombat(delta);
+	
+	// Don't allow enemies to be pushed by players
+	var beforePosition = Position;
+	MoveAndSlide();
+	
+	// If we were pushed, restore position
+	CheckPlayerPush(beforePosition);
+}
+
+private void CheckPlayerPush(Vector2 beforePosition)
+{
+	// Check if we collided with a player
+	for (int i = 0; i < GetSlideCollisionCount(); i++)
 	{
-		// Only server controls enemy AI and physics
-		if (!IsMultiplayerAuthority())
+		var collision = GetSlideCollision(i);
+		if (collision.GetCollider() is Player)
+		{
+			// Restore position to prevent being pushed
+			Position = beforePosition;
 			return;
-		
-		// Process AI (decides what to do)
-		_ai?.ProcessAI(delta);
-		
-		// Process movement (executes movement)
-		_movement?.ProcessMovement(delta);
-		
-		// Process combat (executes attacks)
-		_combat?.ProcessCombat(delta);
-		
-		MoveAndSlide();
+		}
 	}
+}
 	
 	// RPC for death animation/effects
 	[Rpc(MultiplayerApi.RpcMode.AnyPeer, CallLocal = true)]

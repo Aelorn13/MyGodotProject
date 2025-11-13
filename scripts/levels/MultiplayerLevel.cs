@@ -4,7 +4,7 @@ public partial class MultiplayerLevel : Node2D
 {
 	private PackedScene PlayerScene => GD.Load<PackedScene>("res://scenes/entities/player/player.tscn");
 	private PackedScene EnemyScene => GD.Load<PackedScene>("res://scenes/entities/enemies/melee_grunt/melee_grunt.tscn");
-	
+	private PackedScene SlimeScene => GD.Load<PackedScene>("res://scenes/entities/enemies/slime/slime.tscn");
 	private Node2D _spawnPoints;
 	private Node2D _playersContainer;
 	private MultiplayerSpawner _multiplayerSpawner;
@@ -44,15 +44,15 @@ public partial class MultiplayerLevel : Node2D
 			CallDeferred(MethodName.SpawnEnemies);
 		}
 	}
-	private void SpawnEnemies()
+
+private void SpawnEnemies()
 {
-	// Spawn a test enemy
+	// Spawn grunt
 	var enemy = EnemyScene.Instantiate<Enemy>();
 	enemy.Name = "Enemy_1";
 	enemy.EnemyId = 1;
-	enemy.Position = new Vector2(500, 200); // Adjust based on your level
+	enemy.Position = new Vector2(500, 200);
 	
-	// Set patrol points
 	var ai = enemy.GetNode<EnemyAI>("EnemyAI");
 	ai.PatrolPoints = new Godot.Collections.Array<Vector2>
 	{
@@ -61,7 +61,16 @@ public partial class MultiplayerLevel : Node2D
 	};
 	
 	AddChild(enemy);
-	GD.Print("Spawned enemy");
+	
+	// Spawn slime
+	var slime = SlimeScene.Instantiate<Enemy>();
+	slime.Name = "Slime_1";
+	slime.EnemyId = 2;
+	slime.Position = new Vector2(700, 200); // Place somewhere else
+	
+	AddChild(slime);
+	
+	GD.Print("Spawned grunt and slime");
 }
 
 	private void OnPlayerConnected(int peerId)

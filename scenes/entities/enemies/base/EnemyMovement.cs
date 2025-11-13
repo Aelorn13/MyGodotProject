@@ -15,27 +15,27 @@ public partial class EnemyMovement : Node
 		_gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
 	}
 
-	public void ProcessMovement(double delta)
+public void ProcessMovement(double delta)
+{
+	Vector2 velocity = _enemy.Velocity;
+	
+	// Apply gravity
+	if (!_enemy.IsOnFloor())
 	{
-		Vector2 velocity = _enemy.Velocity;
-		
-		// Apply gravity
-		if (!_enemy.IsOnFloor())
-		{
-			velocity.Y += _gravity * (float)delta;
-		}
-		
-		// Apply desired horizontal movement
-		velocity.X = DesiredVelocity.X;
-		
-		// Flip sprite based on movement direction
-		if (velocity.X != 0)
-		{
-			_sprite.FlipH = velocity.X < 0;
-		}
-		
-		_enemy.Velocity = velocity;
+		velocity.Y += _gravity * (float)delta;
 	}
+	
+	// Apply desired horizontal movement
+	velocity.X = DesiredVelocity.X;
+	
+	// Flip sprite based on movement direction
+	if (velocity.X != 0)
+	{
+		_sprite.FlipH = velocity.X < 0;
+	}
+	
+	_enemy.Velocity = velocity;
+}
 
 	public void MoveToward(Vector2 targetPosition, float speed)
 	{

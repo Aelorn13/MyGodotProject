@@ -173,31 +173,76 @@ public partial class EnemyAI : Node
 			}
 		}
 	}
+	// Add this method to EnemyAI class
+protected bool HasLineOfSight(Player target)
+{
+	if (target == null)
+		return false;
+	
+	var spaceState = _enemy.GetWorld2D().DirectSpaceState;
+	
+	// Raycast from enemy center to player center
+	var query = PhysicsRayQueryParameters2D.Create(
+		_enemy.GlobalPosition,
+		target.GlobalPosition
+	);
+	
+	// Exclude the enemy and the target player from collision check
+	query.Exclude = new Godot.Collections.Array<Rid> { _enemy.GetRid(), target.GetRid() };
+	
+	// Only check world geometry (layer 1 = tiles/walls)
+	query.CollideWithBodies = true;
+	query.CollisionMask = 1; // ONLY tiles, not players or enemies
+	
+	var result = spaceState.IntersectRay(query);
+	
+	// If raycast hit something (a wall), LOS is blocked
+	return result.Count == 0; // Empty result = clear LOS
+}
+// Add these fields at top of EnemyAI
+private bool _hadLOSLastFrame = false;
 
-	protected Player FindNearestPlayer()
+protected Player FindNearestPlayer()
+{
+	var playersContainer = _enemy.GetTree().Root.GetNodeOrNull<Node2D>("test_level/Players");
+	if (playersContainer == null)
+		return null;
+	
+	Player nearestPlayer = null;
+	float nearestDistance = float.MaxValue;
+	
+	foreach (var child in playersContainer.GetChildren())
 	{
-		var playersContainer = _enemy.GetTree().Root.GetNodeOrNull<Node2D>("test_level/Players");
-		if (playersContainer == null)
-			return null;
-		
-		Player nearestPlayer = null;
-		float nearestDistance = float.MaxValue;
-		
-		foreach (var child in playersContainer.GetChildren())
+		if (child is Player player)
 		{
-			if (child is Player player)
+			float distance = _enemy.Position.DistanceTo(player.Position);
+			
+			if (distance < _enemy.DetectionRange && distance < nearestDistance)
 			{
-				float distance = _enemy.Position.DistanceTo(player.Position);
-				if (distance < nearestDistance)
+				bool hasLOS = HasLineOfSight(player);
+				
+				// Only print when LOS state changes
+				if (hasLOS != _hadLOSLastFrame)
+				{
+					GD.Print($"Enemy LOS to player: {hasLOS}");
+					_hadLOSLastFrame = hasLOS;
+				}
+				
+				if (hasLOS)
 				{
 					nearestDistance = distance;
 					nearestPlayer = player;
 				}
 			}
 		}
-		
-		return nearestPlayer;
 	}
+	
+	// If no player found, reset LOS tracking
+	if (nearestPlayer == null)
+		_hadLOSLastFrame = false;
+	
+	return nearestPlayer;
+}
 
 	protected virtual void OnDied()
 	{

@@ -1,0 +1,43 @@
+[gd_scene load_steps=8 format=3 uid="uid://dxlndrvn8ski1"]
+
+[ext_resource type="Script" uid="uid://ubc0g6xv2pbf" path="res://scenes/entities/enemies/base/EnemyHealth.cs" id="1_om87s"]
+[ext_resource type="Script" uid="uid://c03wmfv3p8oin" path="res://scenes/entities/enemies/base/EnemyMovement.cs" id="2_qkvj1"]
+[ext_resource type="Script" uid="uid://cob8uihw0q8aw" path="res://scenes/entities/enemies/slime/SlimeCombat.cs" id="3_nnw2d"]
+[ext_resource type="Script" uid="uid://c085vmvks2wof" path="res://scenes/entities/enemies/slime/SlimeAI.cs" id="4_a3x4k"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_1sn8x"]
+size = Vector2(39, 40)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bj07i"]
+radius = 18.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_00218"]
+radius = 60.0
+
+[node name="Slime" type="CharacterBody2D"]
+collision_layer = 5
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = SubResource("PlaceholderTexture2D_1sn8x")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_bj07i")
+
+[node name="AttackArea" type="Area2D" parent="."]
+visible = false
+collision_layer = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
+shape = SubResource("CircleShape2D_00218")
+
+[node name="EnemyHealth" type="Node" parent="."]
+script = ExtResource("1_om87s")
+
+[node name="EnemyMovement" type="Node" parent="."]
+script = ExtResource("2_qkvj1")
+
+[node name="SlimeCombat" type="Node" parent="."]
+script = ExtResource("3_nnw2d")
+
+[node name="SlimeAI" type="Node" parent="."]
+script = ExtResource("4_a3x4k")
