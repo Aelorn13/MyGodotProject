@@ -3,45 +3,45 @@ using Godot.Collections;
 
 public partial class NetworkManager : Node
 {
-	private const int Port = 7777;
-	private const int MaxPlayers = 4;
+    private const int Port = 7777;
+    private const int MaxPlayers = 4;
 
-	private Dictionary<int, Dictionary> _players = new Dictionary<int, Dictionary>();
-	private Upnp _upnp;
+    private Dictionary<int, Dictionary> _players = new Dictionary<int, Dictionary>();
+    private Upnp _upnp;
 
-	// Signals
-	[Signal]
-	public delegate void PlayerConnectedEventHandler(int peerId);
+    // Signals
+    [Signal]
+    public delegate void PlayerConnectedEventHandler(int peerId);
 
-	[Signal]
-	public delegate void PlayerDisconnectedEventHandler(int peerId);
+    [Signal]
+    public delegate void PlayerDisconnectedEventHandler(int peerId);
 
-	[Signal]
-	public delegate void ServerDisconnectedEventHandler();
+    [Signal]
+    public delegate void ServerDisconnectedEventHandler();
 
-	[Signal]
-	public delegate void UpnpCompletedEventHandler(bool success, string message);
+    [Signal]
+    public delegate void UpnpCompletedEventHandler(bool success, string message);
 
-	public override void _Ready()
-	{
-		Multiplayer.PeerConnected += OnPeerConnected;
-		Multiplayer.PeerDisconnected += OnPeerDisconnected;
-		Multiplayer.ConnectedToServer += OnConnectedToServer;
-		Multiplayer.ConnectionFailed += OnConnectionFailed;
-		Multiplayer.ServerDisconnected += OnServerDisconnected;
+    public override void _Ready()
+    {
+        Multiplayer.PeerConnected += OnPeerConnected;
+        Multiplayer.PeerDisconnected += OnPeerDisconnected;
+        Multiplayer.ConnectedToServer += OnConnectedToServer;
+        Multiplayer.ConnectionFailed += OnConnectionFailed;
+        Multiplayer.ServerDisconnected += OnServerDisconnected;
 
-		GD.Print("NetworkManager initialized (C#)");
-	}
+        GD.Print("NetworkManager initialized (C#)");
+    }
 
-	// ===== SERVER FUNCTIONS =====
-	public void CreateServer()
-	{
-		GD.Print("Creating server...");
+    // ===== SERVER FUNCTIONS =====
+    public void CreateServer()
+    {
+        GD.Print("Creating server...");
 
-		// Start UPnP setup in background (async)
-		SetupUpnpAsync();
+        // Start UPnP setup in background (async)
+        SetupUpnpAsync();
 
-		// Create server immediately (don't wait for UPnP)
+        // Create server immediately (don't wait for UPnP)
         var peer = new ENetMultiplayerPeer();
         Error error = peer.CreateServer(Port, MaxPlayers);
 
@@ -119,130 +119,130 @@ public partial class NetworkManager : Node
 
     private void GetPublicIp()
     {
-		// Use Godot's HttpRequest node
-		var httpRequest = new HttpRequest();
-		AddChild(httpRequest);
+        // Use Godot's HttpRequest node
+        var httpRequest = new HttpRequest();
+        AddChild(httpRequest);
 
-		httpRequest.RequestCompleted += OnPublicIpReceived;
+        httpRequest.RequestCompleted += OnPublicIpReceived;
 
-		Error error = httpRequest.Request("https://api.ipify.org");
-		if (error != Error.Ok)
-		{
-			GD.PrintErr("Failed to request public IP");
-			httpRequest.QueueFree();
-		}
-	}
+        Error error = httpRequest.Request("https://api.ipify.org");
+        if (error != Error.Ok)
+        {
+            GD.PrintErr("Failed to request public IP");
+            httpRequest.QueueFree();
+        }
+    }
 
-	private void OnPublicIpReceived(long result, long responseCode, string[] headers, byte[] body)
-	{
-		if (responseCode == 200)
-		{
-			string publicIp = System.Text.Encoding.UTF8.GetString(body);
-			GD.Print($"═══════════════════════════════════════");
-			GD.Print($"Your Public IP: {publicIp}:{Port}");
-			GD.Print($"Give this address to your friends!");
-			GD.Print($"═══════════════════════════════════════");
+    private void OnPublicIpReceived(long result, long responseCode, string[] headers, byte[] body)
+    {
+        if (responseCode == 200)
+        {
+            string publicIp = System.Text.Encoding.UTF8.GetString(body);
+            GD.Print($"═══════════════════════════════════════");
+            GD.Print($"Your Public IP: {publicIp}:{Port}");
+            GD.Print($"Give this address to your friends!");
+            GD.Print($"═══════════════════════════════════════");
 
-			// Emit signal so UI can display it
-			EmitSignal(SignalName.UpnpCompleted, true, $"Share this IP: {publicIp}:{Port}");
-		}
-		else
-		{
-			GD.PrintErr($"Failed to get public IP. Response code: {responseCode}");
-		}
+            // Emit signal so UI can display it
+            EmitSignal(SignalName.UpnpCompleted, true, $"Share this IP: {publicIp}:{Port}");
+        }
+        else
+        {
+            GD.PrintErr($"Failed to get public IP. Response code: {responseCode}");
+        }
 
-		// Clean up the HttpRequest node
-		var sender = GetNodeOrNull<HttpRequest>("HttpRequest");
-		if (sender != null)
-		{
-			sender.QueueFree();
-		}
-	}
+        // Clean up the HttpRequest node
+        var sender = GetNodeOrNull<HttpRequest>("HttpRequest");
+        if (sender != null)
+        {
+            sender.QueueFree();
+        }
+    }
 
-	// ===== CLIENT FUNCTIONS =====
-	public void JoinServer(string ip)
-	{
-		var peer = new ENetMultiplayerPeer();
-		Error error = peer.CreateClient(ip, Port);
+    // ===== CLIENT FUNCTIONS =====
+    public void JoinServer(string ip)
+    {
+        var peer = new ENetMultiplayerPeer();
+        Error error = peer.CreateClient(ip, Port);
 
-		if (error != Error.Ok)
-		{
-			GD.PrintErr($"Failed to connect to server: {error}");
-			return;
-		}
+        if (error != Error.Ok)
+        {
+            GD.PrintErr($"Failed to connect to server: {error}");
+            return;
+        }
 
-		Multiplayer.MultiplayerPeer = peer;
-		GD.Print($"Connecting to server at {ip}:{Port}");
-	}
+        Multiplayer.MultiplayerPeer = peer;
+        GD.Print($"Connecting to server at {ip}:{Port}");
+    }
 
-	public void Disconnect()
-	{
-		// Clean up UPnP port mappings
-		if (_upnp != null && _upnp.GetGateway() != null)
-		{
-			_upnp.DeletePortMapping(Port, "UDP");
-			_upnp.DeletePortMapping(Port, "TCP");
-			GD.Print("UPnP: Port mappings removed.");
-		}
+    public void Disconnect()
+    {
+        // Clean up UPnP port mappings
+        if (_upnp != null && _upnp.GetGateway() != null)
+        {
+            _upnp.DeletePortMapping(Port, "UDP");
+            _upnp.DeletePortMapping(Port, "TCP");
+            GD.Print("UPnP: Port mappings removed.");
+        }
 
-		if (Multiplayer.MultiplayerPeer != null)
-		{
-			Multiplayer.MultiplayerPeer.Close();
-			Multiplayer.MultiplayerPeer = null;
-		}
+        if (Multiplayer.MultiplayerPeer != null)
+        {
+            Multiplayer.MultiplayerPeer.Close();
+            Multiplayer.MultiplayerPeer = null;
+        }
 
-		_players.Clear();
-		GD.Print("Disconnected from multiplayer");
-	}
+        _players.Clear();
+        GD.Print("Disconnected from multiplayer");
+    }
 
-	// ===== NETWORK CALLBACKS =====
-	private void OnPeerConnected(long id)
-	{
-		GD.Print($"Peer connected: {id}");
-		EmitSignal(SignalName.PlayerConnected, (int)id);
-	}
+    // ===== NETWORK CALLBACKS =====
+    private void OnPeerConnected(long id)
+    {
+        GD.Print($"Peer connected: {id}");
+        EmitSignal(SignalName.PlayerConnected, (int)id);
+    }
 
-	private void OnPeerDisconnected(long id)
-	{
-		GD.Print($"Peer disconnected: {id}");
-		_players.Remove((int)id);
-		EmitSignal(SignalName.PlayerDisconnected, (int)id);
-	}
+    private void OnPeerDisconnected(long id)
+    {
+        GD.Print($"Peer disconnected: {id}");
+        _players.Remove((int)id);
+        EmitSignal(SignalName.PlayerDisconnected, (int)id);
+    }
 
-	private void OnConnectedToServer()
-	{
-		GD.Print("Successfully connected to server!");
-		int peerId = Multiplayer.GetUniqueId();
-		_players[peerId] = new Dictionary { { "id", peerId }, { "name", "Player" } };
-	}
+    private void OnConnectedToServer()
+    {
+        GD.Print("Successfully connected to server!");
+        int peerId = Multiplayer.GetUniqueId();
+        _players[peerId] = new Dictionary { { "id", peerId }, { "name", "Player" } };
+    }
 
-	private void OnConnectionFailed()
-	{
-		GD.Print("Connection failed!");
-		Multiplayer.MultiplayerPeer = null;
-	}
+    private void OnConnectionFailed()
+    {
+        GD.Print("Connection failed!");
+        Multiplayer.MultiplayerPeer = null;
+    }
 
-	private void OnServerDisconnected()
-	{
-		GD.Print("Server disconnected!");
-		Multiplayer.MultiplayerPeer = null;
-		_players.Clear();
-		EmitSignal(SignalName.ServerDisconnected);
-	}
+    private void OnServerDisconnected()
+    {
+        GD.Print("Server disconnected!");
+        Multiplayer.MultiplayerPeer = null;
+        _players.Clear();
+        EmitSignal(SignalName.ServerDisconnected);
+    }
 
-	// ===== UTILITY FUNCTIONS =====
-	public bool IsServer()
-	{
-		return Multiplayer.IsServer();
-	}
+    // ===== UTILITY FUNCTIONS =====
+    public bool IsServer()
+    {
+        return Multiplayer.IsServer();
+    }
 
-	public int GetPlayerId()
-	{
-		return Multiplayer.GetUniqueId();
-	}
+    public int GetPlayerId()
+    {
+        return Multiplayer.GetUniqueId();
+    }
 
-	public Dictionary<int, Dictionary> GetPlayers()
-	{
-		return _players;
-	}
+    public Dictionary<int, Dictionary> GetPlayers()
+    {
+        return _players;
+    }
 }
