@@ -2,81 +2,81 @@ using Godot;
 
 public partial class EnemyCombat : Node
 {
-    protected Enemy _enemy;
-    protected Area2D _attackArea;
-    protected double _attackCooldownTimer = 0.0;
-    protected bool _isAttacking = false;
+	protected Enemy _enemy;
+	protected Area2D _attackArea;
+	protected double _attackCooldownTimer = 0.0;
+	protected bool _isAttacking = false;
 
-    public bool CanAttack => _attackCooldownTimer <= 0 && !_isAttacking;
+	public bool CanAttack => _attackCooldownTimer <= 0 && !_isAttacking;
 
-    public void Initialize(Enemy enemy)
-    {
-        _enemy = enemy;
-        _attackArea = enemy.GetNodeOrNull<Area2D>("AttackArea");
-    }
+	public virtual void Initialize(Enemy enemy)
+	{
+		_enemy = enemy;
+		_attackArea = enemy.GetNodeOrNull<Area2D>("AttackArea");
+	}
 
-    public void ProcessCombat(double delta)
-    {
-        if (_attackCooldownTimer > 0)
-        {
-            _attackCooldownTimer -= delta;
-        }
-    }
+	public void ProcessCombat(double delta)
+	{
+		if (_attackCooldownTimer > 0)
+		{
+			_attackCooldownTimer -= delta;
+		}
+	}
 
-    public void PerformAttack()
-    {
-        if (!CanAttack)
-            return;
+	public virtual void PerformAttack()
+	{
+		if (!CanAttack)
+			return;
 
-        _isAttacking = true;
-        _attackCooldownTimer = _enemy.AttackCooldown;
+		_isAttacking = true;
+		_attackCooldownTimer = _enemy.AttackCooldown;
 
-        // Show attack area briefly
-        if (_attackArea != null)
-        {
-            _attackArea.Visible = true;
+		// Show attack area briefly
+		if (_attackArea != null)
+		{
+			_attackArea.Visible = true;
 
-            // Position based on facing direction
-            int direction = _enemy.GetNode<Sprite2D>("Sprite2D").FlipH ? -1 : 1;
-            _attackArea.Position = new Vector2(direction * 30, 0);
+			// Position based on facing direction
+			int direction = _enemy.GetNode<Sprite2D>("Sprite2D").FlipH ? -1 : 1;
+			_attackArea.Position = new Vector2(direction * 30, 0);
 
-            CheckAttackHits();
+			CheckAttackHits();
 
-            // Hide after brief delay
-            _enemy.GetTree().CreateTimer(0.2).Timeout += () =>
-            {
-                if (_attackArea != null)
-                    _attackArea.Visible = false;
-                _isAttacking = false;
-            };
-        }
+			// Hide after brief delay
+			_enemy.GetTree().CreateTimer(0.2).Timeout += () =>
+			{
+				if (_attackArea != null)
+					_attackArea.Visible = false;
+				_isAttacking = false;
+			};
+		}
 
-        GD.Print($"Enemy {_enemy.EnemyName} attacked!");
-    }
+		GD.Print($"Enemy {_enemy.EnemyName} attacked!");
+	}
 
-    protected void CheckAttackHits()
-    {
-        if (_attackArea == null)
-            return;
+	protected void CheckAttackHits()
+	{
+		if (_attackArea == null)
+			return;
 
-        var overlappingBodies = _attackArea.GetOverlappingBodies();
+		var overlappingBodies = _attackArea.GetOverlappingBodies();
 
-        foreach (var body in overlappingBodies)
-        {
-            if (body is Player player)
-            {
-                var playerHealth = player.GetNode<PlayerHealth>("PlayerHealth");
-                if (playerHealth != null)
-                {
-                    playerHealth.RpcId(
-                        player.PlayerId,
-                        PlayerHealth.MethodName.TakeDamage,
-                        _enemy.AttackDamage,
-                        _enemy.EnemyId
-                    );
-                    GD.Print($"Enemy hit player {player.PlayerId}!");
-                }
-            }
-        }
-    }
+		foreach (var body in overlappingBodies)
+		{
+			if (body is Player player)
+			{
+				var playerHealth = player.GetNode<PlayerHealth>("PlayerHealth");
+				if (playerHealth != null)
+				{
+					playerHealth.RpcId(
+						player.PlayerId,
+						PlayerHealth.MethodName.TakeDamage,
+						_enemy.AttackDamage,
+						_enemy.EnemyId
+					);
+					GD.Print($"Enemy hit player {player.PlayerId}!");
+				}
+			}
+		}
+	}
 }

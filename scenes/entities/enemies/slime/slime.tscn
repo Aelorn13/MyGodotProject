@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3 uid="uid://dxlndrvn8ski1"]
+[gd_scene load_steps=9 format=3 uid="uid://dxlndrvn8ski1"]
 
 [ext_resource type="Script" uid="uid://ubc0g6xv2pbf" path="res://scenes/entities/enemies/base/EnemyHealth.cs" id="1_om87s"]
+[ext_resource type="Script" uid="uid://311mq5306shp" path="res://scenes/entities/enemies/base/Enemy.cs" id="1_qkvj1"]
 [ext_resource type="Script" uid="uid://c03wmfv3p8oin" path="res://scenes/entities/enemies/base/EnemyMovement.cs" id="2_qkvj1"]
 [ext_resource type="Script" uid="uid://cob8uihw0q8aw" path="res://scenes/entities/enemies/slime/SlimeCombat.cs" id="3_nnw2d"]
 [ext_resource type="Script" uid="uid://c085vmvks2wof" path="res://scenes/entities/enemies/slime/SlimeAI.cs" id="4_a3x4k"]
@@ -16,6 +17,7 @@ radius = 60.0
 
 [node name="Slime" type="CharacterBody2D"]
 collision_layer = 5
+script = ExtResource("1_qkvj1")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = SubResource("PlaceholderTexture2D_1sn8x")

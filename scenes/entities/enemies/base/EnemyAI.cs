@@ -92,10 +92,6 @@ public partial class EnemyAI : Node
         Vector2 targetPoint = PatrolPoints[_currentPatrolIndex];
         float distanceToTarget = _enemy.Position.DistanceTo(targetPoint);
 
-        GD.Print(
-            $"Patrolling: Going to point {_currentPatrolIndex} at {targetPoint}, distance: {distanceToTarget}"
-        );
-
         if (distanceToTarget < 10f)
         {
             _movement.Stop();
@@ -144,45 +140,33 @@ public partial class EnemyAI : Node
 
     protected virtual void CheckStateTransitions(Player nearestPlayer)
     {
+        AIState previousState = _currentState; // Track previous state
+
         if (nearestPlayer == null)
         {
-            // No player nearby, patrol
-            if (_currentState != AIState.Patrol)
-            {
-                _currentState = AIState.Patrol;
-                GD.Print($"Enemy entering PATROL state");
-            }
-            return;
-        }
-
-        float distanceToPlayer = _enemy.Position.DistanceTo(nearestPlayer.Position);
-
-        if (distanceToPlayer <= _enemy.AttackRange)
-        {
-            // In attack range
-            if (_currentState != AIState.Attack)
-            {
-                _currentState = AIState.Attack;
-                GD.Print($"Enemy entering ATTACK state");
-            }
-        }
-        else if (distanceToPlayer <= _enemy.DetectionRange)
-        {
-            // In detection range, chase
-            if (_currentState != AIState.Chase)
-            {
-                _currentState = AIState.Chase;
-                GD.Print($"Enemy entering CHASE state");
-            }
+            _currentState = AIState.Patrol;
         }
         else
         {
-            // Out of range, patrol
-            if (_currentState != AIState.Patrol)
+            float distanceToPlayer = _enemy.Position.DistanceTo(nearestPlayer.Position);
+
+            if (distanceToPlayer <= _enemy.AttackRange)
+            {
+                _currentState = AIState.Attack;
+            }
+            else if (distanceToPlayer <= _enemy.DetectionRange)
+            {
+                _currentState = AIState.Chase;
+            }
+            else
             {
                 _currentState = AIState.Patrol;
-                GD.Print($"Enemy entering PATROL state");
             }
+        }
+
+        if (_currentState != previousState)
+        {
+            GD.Print($"{_enemy.EnemyName} state: {previousState} → {_currentState}");
         }
     }
 
