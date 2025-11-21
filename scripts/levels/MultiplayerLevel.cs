@@ -2,94 +2,95 @@ using Godot;
 
 public partial class MultiplayerLevel : Node2D
 {
-	private PackedScene PlayerScene =>
-		GD.Load<PackedScene>("res://scenes/entities/player/player.tscn");
-	private PackedScene EnemyScene =>
-		GD.Load<PackedScene>("res://scenes/entities/enemies/melee_grunt/melee_grunt.tscn");
-	private PackedScene SlimeScene =>
-		GD.Load<PackedScene>("res://scenes/entities/enemies/slime/slime.tscn");
-	private Node2D _spawnPoints;
-	private Node2D _playersContainer;
-	private MultiplayerSpawner _multiplayerSpawner;
+    private PackedScene PlayerScene =>
+        GD.Load<PackedScene>("res://scenes/entities/player/player.tscn");
+    private PackedScene EnemyScene =>
+        GD.Load<PackedScene>("res://scenes/entities/enemies/melee_grunt/melee_grunt.tscn");
+    private PackedScene SlimeScene =>
+        GD.Load<PackedScene>("res://scenes/entities/enemies/slime/slime.tscn");
+    private Node2D _spawnPoints;
+    private Node2D _playersContainer;
+    private MultiplayerSpawner _multiplayerSpawner;
 
-	public override void _Ready()
-	{
-		// --- 1. GET NODE REFERENCES ---
-		_spawnPoints = GetNode<Node2D>("SpawnPoints");
-		_playersContainer = GetNode<Node2D>("Players");
+    public override void _Ready()
+    {
+        // --- 1. GET NODE REFERENCES ---
+        _spawnPoints = GetNode<Node2D>("SpawnPoints");
+        _playersContainer = GetNode<Node2D>("Players");
 
-		if (PlayerScene == null)
-		{
-			GD.PrintErr("FATAL: Could not load player scene!");
-			return;
-		}
+        if (PlayerScene == null)
+        {
+            GD.PrintErr("FATAL: Could not load player scene!");
+            return;
+        }
 
-		// --- 2. CREATE AND CONFIGURE THE SPAWNER ---
-		_multiplayerSpawner = new MultiplayerSpawner();
-		_multiplayerSpawner.Name = "MultiplayerSpawner";
-		AddChild(_multiplayerSpawner);
+        // --- 2. CREATE AND CONFIGURE THE SPAWNER ---
+        _multiplayerSpawner = new MultiplayerSpawner();
+        _multiplayerSpawner.Name = "MultiplayerSpawner";
+        AddChild(_multiplayerSpawner);
 
-		_multiplayerSpawner.SpawnPath = _playersContainer.GetPath();
-		_multiplayerSpawner.AddSpawnableScene(PlayerScene.ResourcePath);
-		_multiplayerSpawner.SpawnFunction = new Callable(this, MethodName.SpawnPlayerFunction);
-		GD.Print("MultiplayerSpawner configured in _Ready.");
+        _multiplayerSpawner.SpawnPath = _playersContainer.GetPath();
+        _multiplayerSpawner.AddSpawnableScene(PlayerScene.ResourcePath);
+        _multiplayerSpawner.SpawnFunction = new Callable(this, MethodName.SpawnPlayerFunction);
+        GD.Print("MultiplayerSpawner configured in _Ready.");
 
-		// --- 3. CONNECT SIGNALS ---
-		var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
-		networkManager.PlayerConnected += OnPlayerConnected;
-		networkManager.PlayerDisconnected += OnPlayerDisconnected;
+        // --- 3. CONNECT SIGNALS ---
+        var networkManager = GetNode<NetworkManager>("/root/NetworkManager");
+        networkManager.PlayerConnected += OnPlayerConnected;
+        networkManager.PlayerDisconnected += OnPlayerDisconnected;
 
-		// --- 4. SERVER SPAWNS ITSELF ---
-		if (Multiplayer.IsServer())
-		{
-			GD.Print("Server is in _Ready. Spawning host (player 1).");
-			SpawnPlayer(Multiplayer.GetUniqueId());
-			CallDeferred(MethodName.SpawnEnemies);
-		}
-	}
+        // --- 4. SERVER SPAWNS ITSELF ---
+        if (Multiplayer.IsServer())
+        {
+            GD.Print("Server is in _Ready. Spawning host (player 1).");
+            SpawnPlayer(Multiplayer.GetUniqueId());
+            CallDeferred(MethodName.SpawnEnemies);
+        }
+    }
 
-	private void SpawnEnemies()
-	{
-		if (EnemyScene == null)
-		{
-			GD.PrintErr("EnemyScene is null!");
-			return;
-		}
+    private void SpawnEnemies()
+    {
+        if (EnemyScene == null)
+        {
+            GD.PrintErr("EnemyScene is null!");
+            return;
+        }
 
-		if (SlimeScene == null)
-		{
-			GD.PrintErr("SlimeScene is null!");
-			return;
-		}
-		// Spawn grunt
-		var enemy = EnemyScene.Instantiate<Enemy>();
-		enemy.Name = "Enemy_1";
-		enemy.EnemyId = 1;
-		enemy.Position = new Vector2(500, 200);
+        if (SlimeScene == null)
+        {
+            GD.PrintErr("SlimeScene is null!");
+            return;
+        }
+        var enemy = EnemyScene.Instantiate<Enemy>();
+        enemy.Name = "Enemy_1";
+        enemy.EnemyId = 1;
+        enemy.Position = new Vector2(500, 200);
+        AddChild(enemy);
 
-		var ai = enemy.GetNode<EnemyAI>("EnemyAI");
-		ai.PatrolPoints = new Godot.Collections.Array<Vector2>
-		{
-			new Vector2(400, 200),
-			new Vector2(600, 200),
-		};
+        var ai = enemy.GetNode<EnemyAI>("EnemyAI");
+        if (ai != null)
+        {
+            ai.PatrolPoints = new Godot.Collections.Array<Vector2>
+            {
+                new Vector2(450, 200),
+                new Vector2(550, 200),
+            };
+            GD.Print($"Grunt spawned at {enemy.Position}, patrol points set");
+        }
 
-		AddChild(enemy);
+        // Spawn slime
+        var slime = SlimeScene.Instantiate<Enemy>();
+        slime.Name = "Slime_1";
+        slime.EnemyId = 2;
+        slime.Position = new Vector2(700, 200); // Place somewhere else
 
-		// Spawn slime
-		var slime = SlimeScene.Instantiate<Enemy>();
-		slime.Name = "Slime_1";
-		slime.EnemyId = 2;
-		slime.Position = new Vector2(700, 200); // Place somewhere else
+        AddChild(slime);
+        GD.Print("Spawned grunt and slime");
+    }
 
-		AddChild(slime);
-
-		GD.Print("Spawned grunt and slime");
-	}
-
-	private void OnPlayerConnected(int peerId)
-	{
-		// The server's own connection signal (ID 1) is ignored because the host is already handled by _Ready().
+    private void OnPlayerConnected(int peerId)
+    {
+        // The server's own connection signal (ID 1) is ignored because the host is already handled by _Ready().
         if (peerId == 1)
         {
             return;
